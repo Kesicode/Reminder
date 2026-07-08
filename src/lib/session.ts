@@ -34,7 +34,7 @@ const SESSION_DURATION_SECONDS = 60 * 60 * 24 * 5;
  * outbound API call required. We then store the verified user data in an
  * httpOnly cookie directly, eliminating the external dependency entirely.
  */
-export async function createSession(idToken: string): Promise<boolean> {
+export async function createSession(idToken: string): Promise<{ success: boolean; error?: string }> {
   try {
     console.log("[Session] Verifying ID token with Admin SDK...");
 
@@ -60,14 +60,14 @@ export async function createSession(idToken: string): Promise<boolean> {
     });
 
     console.log("[Session] Session cookie set successfully ✓ (expires in 5 days)");
-    return true;
+    return { success: true };
   } catch (error: any) {
     console.error(
       "[Session] Failed to create session.",
       "\n  Code:", error?.code,
       "\n  Message:", error?.message
     );
-    return false;
+    return { success: false, error: error?.message || "Verification failed" };
   }
 }
 
