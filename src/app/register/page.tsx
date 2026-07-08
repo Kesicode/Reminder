@@ -115,16 +115,7 @@ export default function RegisterPage() {
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
         console.error("[Register] Session sync failed:", res.status, body);
-        // Account was created successfully — session sync is a non-fatal issue.
-        // User can sign in manually. Don't block them with a hard error.
-        console.warn(
-          "[Register] Session cookie could not be set — user must sign in manually."
-        );
-        setSuccess(
-          "Account created! Please sign in with your new credentials."
-        );
-        setTimeout(() => router.push("/login"), 2500);
-        return;
+        throw new Error(body.error || "Failed to synchronize session cookie.");
       }
 
       console.log("[Register] Session synchronized ✓ — redirecting to dashboard");
