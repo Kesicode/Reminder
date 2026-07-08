@@ -1,5 +1,5 @@
 import { cookies } from "next/headers";
-import { adminAuth } from "@/firebase/admin";
+import { getAdminAuth } from "@/firebase/admin";
 
 export interface SessionPayload {
   uid: string;
@@ -23,20 +23,11 @@ const SESSION_DURATION_SECONDS = 60 * 60 * 24 * 5;
 
 /**
  * Creates a server-side session after verifying the Firebase ID token.
- *
- * ROOT CAUSE FIX: The previous implementation used adminAuth.createSessionCookie()
- * which makes an outbound HTTP call to identitytoolkit.googleapis.com every time
- * it's invoked. If that call fails (network issue, Google rate limit, cold start
- * latency), the entire session creation fails.
- *
- * This implementation instead calls adminAuth.verifyIdToken() which performs
- * LOCAL cryptographic verification using Google's cached public keys — no
- * outbound API call required. We then store the verified user data in an
- * httpOnly cookie directly, eliminating the external dependency entirely.
  */
 export async function createSession(idToken: string): Promise<{ success: boolean; error?: string }> {
   try {
     console.log("[Session] Verifying ID token with Admin SDK...");
+    const adminAuth = getAdminAuth();
 
     // verifyIdToken: local crypto check using cached Google public keys.
     // Only makes a network call once to fetch public keys, then caches them.

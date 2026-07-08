@@ -1,7 +1,7 @@
 "use server";
 
 import { getSession } from "@/lib/session";
-import { adminAuth, adminDb } from "@/firebase/admin";
+import { getAdminAuth, getAdminDb } from "@/firebase/admin";
 import { revalidatePath } from "next/cache";
 
 // Middleware verification helper
@@ -16,6 +16,9 @@ export async function toggleUserStatus(uid: string, disabled: boolean) {
   await verifyAdmin();
 
   try {
+    const adminAuth = getAdminAuth();
+    const adminDb = getAdminDb();
+
     // 1. Update user state in Firebase Authentication
     await adminAuth.updateUser(uid, { disabled });
 
@@ -37,6 +40,7 @@ export async function deleteGroup(groupId: string) {
   await verifyAdmin();
 
   try {
+    const adminDb = getAdminDb();
     const batch = adminDb.batch();
 
     // 1. Delete group document
@@ -76,6 +80,7 @@ export async function getAdminStats() {
   await verifyAdmin();
 
   try {
+    const adminDb = getAdminDb();
     const usersSnap = await adminDb.collection("users").get();
     const groupsSnap = await adminDb.collection("groups").get();
     const remindersSnap = await adminDb.collection("reminders").get();

@@ -1,9 +1,11 @@
 import admin from "firebase-admin";
 
-const initializeFirebaseAdmin = () => {
-  if (admin.apps.length > 0) {
-    return admin.apps[0];
-  }
+let adminApp: admin.app.App | null = null;
+let adminAuth: admin.auth.Auth | null = null;
+let adminDb: admin.firestore.Firestore | null = null;
+
+export function getAdminApp() {
+  if (adminApp) return adminApp;
 
   const projectId =
     process.env.FIREBASE_PROJECT_ID ||
@@ -19,7 +21,7 @@ const initializeFirebaseAdmin = () => {
     privateKey = privateKey.replace(/\\n/g, "\n");
   }
 
-  console.log("[Firebase Admin] Initializing...");
+  console.log("[Firebase Admin] Initializing on demand...");
   console.log("[Firebase Admin] projectId:", projectId ? "✓ present" : "✗ MISSING");
   console.log("[Firebase Admin] clientEmail:", clientEmail ? "✓ present" : "✗ MISSING");
   console.log(
@@ -27,14 +29,18 @@ const initializeFirebaseAdmin = () => {
     privateKey ? `✓ present (starts with: ${privateKey.slice(0, 30)}...)` : "✗ MISSING"
   );
 
+  if (admin.apps.length > 0) {
+    console.log("[Firebase Admin] Reusing existing app instance");
+    adminApp = admin.apps[0];
+    return adminApp;
+  }
+
   if (!projectId) {
-    throw new Error(
-      "[Firebase Admin] FIREBASE_PROJECT_ID (or NEXT_PUBLIC_FIREBASE_PROJECT_ID) is not set."
-    );
+    console.warn("[Firebase Admin] WARNING: FIREBASE_PROJECT_ID is not set.");
   }
 
   if (clientEmail && privateKey) {
-    const app = admin.initializeApp({
+    adminApp = admin.initializeApp({
       credential: admin.credential.cert({
         projectId,
         clientEmail,
@@ -42,21 +48,26 @@ const initializeFirebaseAdmin = () => {
       }),
     });
     console.log("[Firebase Admin] Initialized with service account credentials ✓");
-    return app;
+    return adminApp;
   }
 
-  // Warn loudly — missing credentials will cause session cookie operations to fail
   console.warn(
     "[Firebase Admin] WARNING: FIREBASE_CLIENT_EMAIL or FIREBASE_PRIVATE_KEY is missing. " +
-      "Falling back to Application Default Credentials. " +
-      "Session cookie operations will likely FAIL unless running on GCP."
+      "Falling back to Application Default Credentials."
   );
 
-  return admin.initializeApp({ projectId });
-};
+  adminApp = admin.initializeApp({ projectId });
+  return adminApp;
+}
 
-const adminApp = initializeFirebaseAdmin();
-const adminAuth = admin.auth(adminApp);
-const adminDb = admin.firestore(adminApp);
+export function getAdminAuth() {
+  if (adminAuth) return adminAuth;
+  adminAuth = admin.auth(getAdminApp());
+  return adminAuth;
+}
 
-export { adminApp, adminAuth, adminDb };
+export function getAdminDb() {
+  if (adminDb) return adminDb;
+  adminDb = admin.firestore(getAdminApp());
+  return adminDb;
+}
