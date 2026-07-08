@@ -1,4 +1,6 @@
-import admin from "firebase-admin";
+import { initializeApp, getApps, getApp, cert } from "firebase-admin/app";
+import { getAuth } from "firebase-admin/auth";
+import { getFirestore } from "firebase-admin/firestore";
 
 let adminApp: any = null;
 let adminAuth: any = null;
@@ -29,9 +31,9 @@ export function getAdminApp() {
     privateKey ? `✓ present (starts with: ${privateKey.slice(0, 30)}...)` : "✗ MISSING"
   );
 
-  if (admin.apps.length > 0) {
+  if (getApps().length > 0) {
     console.log("[Firebase Admin] Reusing existing app instance");
-    adminApp = admin.apps[0];
+    adminApp = getApp();
     return adminApp;
   }
 
@@ -40,8 +42,8 @@ export function getAdminApp() {
   }
 
   if (clientEmail && privateKey) {
-    adminApp = admin.initializeApp({
-      credential: admin.credential.cert({
+    adminApp = initializeApp({
+      credential: cert({
         projectId,
         clientEmail,
         privateKey,
@@ -56,18 +58,18 @@ export function getAdminApp() {
       "Falling back to Application Default Credentials."
   );
 
-  adminApp = admin.initializeApp({ projectId });
+  adminApp = initializeApp({ projectId });
   return adminApp;
 }
 
 export function getAdminAuth() {
   if (adminAuth) return adminAuth;
-  adminAuth = admin.auth(getAdminApp());
+  adminAuth = getAuth(getAdminApp());
   return adminAuth;
 }
 
 export function getAdminDb() {
   if (adminDb) return adminDb;
-  adminDb = admin.firestore(getAdminApp());
+  adminDb = getFirestore(getAdminApp());
   return adminDb;
 }
