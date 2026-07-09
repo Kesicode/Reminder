@@ -20,28 +20,29 @@ service cloud.firestore {
 
     // USERS collection
     match /users/{userId} {
-      allow read: if isAuthenticated() && (isOwner(userId) || isSuperAdmin());
-      allow write: if isAuthenticated() && isOwner(userId);
+      allow read: if request.auth != null && (userId == request.auth.uid || request.auth.token.superAdmin == true);
+      allow write: if request.auth != null && userId == request.auth.uid;
     }
 
     // REMINDERS collection
     match /reminders/{reminderId} {
-      allow read: if isAuthenticated() && (
-        isOwner(resource.data.ownerId) || 
+      // For queries, Firestore must statically prove the rule matches the where() clauses.
+      allow read: if request.auth != null && (
+        resource.data.ownerId == request.auth.uid || 
         (
           resource.data.groupId != null && 
           isGroupMember(resource.data.groupId) &&
           (resource.data.visibilityRestriction == false || resource.data.assignedTo == request.auth.uid || isGroupAdmin(resource.data.groupId))
-        ) || isSuperAdmin()
+        ) || request.auth.token.superAdmin == true
       );
       
-      allow create: if isAuthenticated() && (
+      allow create: if request.auth != null && (
         request.resource.data.ownerId == request.auth.uid &&
         (request.resource.data.groupId == null || isGroupMember(request.resource.data.groupId))
       );
       
-      allow update, delete: if isAuthenticated() && (
-        isOwner(resource.data.ownerId) || 
+      allow update, delete: if request.auth != null && (
+        resource.data.ownerId == request.auth.uid || 
         (resource.data.groupId != null && isGroupAdmin(resource.data.groupId)) ||
         (resource.data.assignedTo == request.auth.uid && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'completedAt', 'updatedAt']))
       );
@@ -49,39 +50,39 @@ service cloud.firestore {
 
     // GROUPS collection
     match /groups/{groupId} {
-      allow read: if isAuthenticated() && (isGroupMember(groupId) || isSuperAdmin());
-      allow create: if isAuthenticated();
-      allow update: if isAuthenticated() && (isGroupAdmin(groupId) || isSuperAdmin());
-      allow delete: if isAuthenticated() && (getGroupRole(groupId) == 'owner' || isSuperAdmin());
+      allow read: if request.auth != null && (isGroupMember(groupId) || request.auth.token.superAdmin == true);
+      allow create: if request.auth != null;
+      allow update: if request.auth != null && (isGroupAdmin(groupId) || request.auth.token.superAdmin == true);
+      allow delete: if request.auth != null && (getGroupRole(groupId) == 'owner' || request.auth.token.superAdmin == true);
     }
 
     // GROUP MEMBERS collection
     match /groupMembers/{memberId} {
-      allow read: if isAuthenticated() && (isGroupMember(resource.data.groupId) || isSuperAdmin());
-      allow create: if isAuthenticated(); // Handled during group creation or accepting invitations
-      allow update, delete: if isAuthenticated() && (isGroupAdmin(resource.data.groupId) || isSuperAdmin());
+      allow read: if request.auth != null && (isGroupMember(resource.data.groupId) || request.auth.token.superAdmin == true);
+      allow create: if request.auth != null; // Handled during group creation or accepting invitations
+      allow update, delete: if request.auth != null && (isGroupAdmin(resource.data.groupId) || request.auth.token.superAdmin == true);
     }
 
     // INVITATIONS collection
     match /invitations/{inviteId} {
-      allow read: if isAuthenticated() && (
+      allow read: if request.auth != null && (
         request.auth.token.email.toLowerCase() == resource.data.email.toLowerCase() ||
         isGroupAdmin(resource.data.groupId) ||
-        isSuperAdmin()
+        request.auth.token.superAdmin == true
       );
-      allow create: if isAuthenticated() && (isGroupAdmin(request.resource.data.groupId) || isSuperAdmin());
-      allow update: if isAuthenticated() && (
+      allow create: if request.auth != null && (isGroupAdmin(request.resource.data.groupId) || request.auth.token.superAdmin == true);
+      allow update: if request.auth != null && (
         request.auth.token.email.toLowerCase() == resource.data.email.toLowerCase() ||
         isGroupAdmin(resource.data.groupId) ||
-        isSuperAdmin()
+        request.auth.token.superAdmin == true
       );
-      allow delete: if isAuthenticated() && (isGroupAdmin(resource.data.groupId) || isSuperAdmin());
+      allow delete: if request.auth != null && (isGroupAdmin(resource.data.groupId) || request.auth.token.superAdmin == true);
     }
 
     // NOTIFICATIONS collection
     match /notifications/{notificationId} {
-      allow read: if isAuthenticated() && (isOwner(resource.data.userId) || isSuperAdmin());
-      allow write: if isAuthenticated() && (isOwner(resource.data.userId) || isSuperAdmin());
+      allow read: if request.auth != null && (resource.data.userId == request.auth.uid || request.auth.token.superAdmin == true);
+      allow write: if request.auth != null && (resource.data.userId == request.auth.uid || request.auth.token.superAdmin == true);
     }
   }
 }

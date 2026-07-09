@@ -99,6 +99,7 @@ export function useReminders(groupId: string | null = null) {
 
     const newReminder = {
       ...data,
+      groupId: data.groupId || null,
       ownerId: user.uid,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
