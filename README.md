@@ -26,25 +26,6 @@ An Enterprise Collaborative Reminder Platform built to manage personal reminders
 1. Node.js 20+
 2. A Firebase project with Firestore, Authentication (Email/Password), and Cloud Functions enabled.
 
-### Environment Setup
-
-Create a `.env.local` file in the root directory and add your Firebase configuration:
-
-```bash
-NEXT_PUBLIC_FIREBASE_API_KEY=your_api_key
-NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_auth_domain
-NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_project_id
-NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your_storage_bucket
-NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_messaging_sender_id
-NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
-NEXT_PUBLIC_FIREBASE_VAPID_KEY=your_vapid_key
-
-# For Server-Side Admin SDK Authentication
-FIREBASE_PROJECT_ID=your_project_id
-FIREBASE_CLIENT_EMAIL=your_service_account_email
-FIREBASE_PRIVATE_KEY="your_private_key_with_escaped_newlines"
-```
-
 ### Installation
 
 1. Install dependencies:
