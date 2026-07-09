@@ -15,7 +15,7 @@ export default function Home() {
         
         <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-border bg-neutral-900/50 backdrop-blur-md mb-8">
           <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-          <span className="text-xs font-medium text-neutral-300">Welcome to Remindeq</span>
+          <span className="text-xs font-medium text-neutral-300">Welcome to RemindSync</span>
         </div>
 
         <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight mb-6 bg-gradient-to-br from-white to-neutral-400 bg-clip-text text-transparent">
@@ -24,7 +24,7 @@ export default function Home() {
         </h1>
         
         <p className="text-lg md:text-xl text-neutral-400 max-w-2xl mb-10 leading-relaxed">
-          Remindeq is a premium, real-time task management ecosystem. Whether you're organizing your personal life or coordinating with a team, stay on top of everything without the friction.
+          RemindSync is a premium, real-time task management ecosystem. Whether you're organizing your personal life or coordinating with a team, stay on top of everything without the friction.
         </p>
 
         <div className="flex flex-col sm:flex-row gap-4 items-center justify-center">
@@ -84,7 +84,7 @@ export default function Home() {
 
       {/* Footer */}
       <footer className="w-full text-center py-8 text-neutral-500 text-sm z-10 border-t border-border/50 mt-auto">
-        <p>© {new Date().getFullYear()} Remindeq. Designed for peak productivity.</p>
+        <p>© {new Date().getFullYear()} RemindSync. Designed for peak productivity.</p>
       </footer>
     </div>
   );
