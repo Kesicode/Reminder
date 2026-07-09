@@ -88,7 +88,7 @@ export default function LoginForm() {
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
         console.error("[Login] Session sync failed:", res.status, body);
-        throw new Error("Failed to synchronize session. Please try again.");
+        throw new Error(body.error || "Failed to synchronize session. Please try again.");
       }
 
       console.log("[Login] Session synchronized ✓ — redirecting to", redirectPath);

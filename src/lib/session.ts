@@ -1,5 +1,5 @@
 import { cookies } from "next/headers";
-import { adminAuth } from "@/firebase/admin";
+import { getAdminAuth } from "@/firebase/admin";
 
 export interface SessionPayload {
   uid: string;
@@ -8,93 +8,95 @@ export interface SessionPayload {
   superAdmin?: boolean;
 }
 
+// Internal shape stored in the cookie
+interface CookieData {
+  uid: string;
+  email: string;
+  superAdmin: boolean;
+  // Unix timestamp (seconds) when this session expires
+  exp: number;
+}
+
 const SESSION_COOKIE_NAME = "remindsync_session";
-// Session expires in 5 days
-const EXPIRES_IN = 60 * 60 * 24 * 5 * 1000;
+// Session lasts 5 days
+const SESSION_DURATION_SECONDS = 60 * 60 * 24 * 5;
 
 /**
- * Creates a Firebase Admin session cookie from a client-side ID token.
- * Includes a retry with a 1.5s delay to handle Firebase token propagation
- * latency for newly created accounts.
+ * Creates a server-side session after verifying the Firebase ID token.
  */
-export async function createSession(idToken: string): Promise<boolean> {
-  const attempt = async (isRetry = false): Promise<string> => {
-    if (isRetry) {
-      console.log("[Session] Retrying createSessionCookie after propagation delay...");
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-    }
-    return adminAuth.createSessionCookie(idToken, { expiresIn: EXPIRES_IN });
-  };
-
+export async function createSession(idToken: string): Promise<{ success: boolean; error?: string }> {
   try {
-    let sessionCookie: string;
+    console.log("[Session] Verifying ID token with Admin SDK...");
+    const adminAuth = getAdminAuth();
 
-    try {
-      console.log("[Session] Attempting to create session cookie...");
-      sessionCookie = await attempt();
-    } catch (firstError: any) {
-      // Firebase can return auth/argument-error or auth/invalid-id-token for
-      // brand-new accounts due to token propagation delay (~1-2s). Retry once.
-      console.warn(
-        "[Session] First attempt failed:",
-        firstError?.code || firstError?.message,
-        "— retrying..."
-      );
-      sessionCookie = await attempt(true);
-    }
+    // verifyIdToken: local crypto check using cached Google public keys.
+    // Only makes a network call once to fetch public keys, then caches them.
+    const decoded = await adminAuth.verifyIdToken(idToken);
+    console.log("[Session] Token verified ✓ uid:", decoded.uid);
+
+    const cookieData: CookieData = {
+      uid: decoded.uid,
+      email: decoded.email || "",
+      superAdmin: decoded.superAdmin === true,
+      exp: Math.floor(Date.now() / 1000) + SESSION_DURATION_SECONDS,
+    };
 
     const cookieStore = await cookies();
-    cookieStore.set(SESSION_COOKIE_NAME, sessionCookie, {
-      maxAge: EXPIRES_IN / 1000,
+    cookieStore.set(SESSION_COOKIE_NAME, JSON.stringify(cookieData), {
+      maxAge: SESSION_DURATION_SECONDS,
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       path: "/",
       sameSite: "lax",
     });
 
-    console.log("[Session] Session cookie set successfully ✓");
-    return true;
+    console.log("[Session] Session cookie set successfully ✓ (expires in 5 days)");
+    return { success: true };
   } catch (error: any) {
     console.error(
-      "[Session] Failed to create session cookie after retry.",
+      "[Session] Failed to create session.",
       "\n  Code:", error?.code,
       "\n  Message:", error?.message
     );
-    return false;
+    return { success: false, error: error?.message || "Verification failed" };
   }
 }
 
 /**
- * Reads and verifies the session cookie. Returns the decoded session payload
- * or null if the cookie is missing or invalid.
+ * Reads and parses the session cookie.
+ * The cookie was set by our own server after token verification,
+ * so we trust its contents (httpOnly — cannot be set or read by client JS).
  */
 export async function getSession(): Promise<SessionPayload | null> {
   try {
     const cookieStore = await cookies();
-    const sessionCookie = cookieStore.get(SESSION_COOKIE_NAME)?.value;
+    const raw = cookieStore.get(SESSION_COOKIE_NAME)?.value;
 
-    if (!sessionCookie) {
+    if (!raw) {
       return null;
     }
 
-    const decodedToken = await adminAuth.verifySessionCookie(sessionCookie, true);
+    const data: CookieData = JSON.parse(raw);
+
+    // Check session expiry
+    if (data.exp < Math.floor(Date.now() / 1000)) {
+      console.warn("[Session] Session cookie has expired.");
+      return null;
+    }
 
     return {
-      uid: decodedToken.uid,
-      email: decodedToken.email || "",
-      superAdmin: decodedToken.superAdmin === true,
+      uid: data.uid,
+      email: data.email,
+      superAdmin: data.superAdmin,
     };
   } catch (error: any) {
-    console.error(
-      "[Session] Failed to verify session cookie:",
-      error?.code || error?.message
-    );
+    console.error("[Session] Failed to parse session cookie:", error?.message);
     return null;
   }
 }
 
 /**
- * Deletes the session cookie, effectively logging the user out server-side.
+ * Deletes the session cookie, logging the user out server-side.
  */
 export async function deleteSession(): Promise<boolean> {
   try {

@@ -10,15 +10,28 @@ const initializeFirebaseAdmin = () => {
   if (existingApp) {
     return existingApp;
   }
+let adminApp: any = null;
+let adminAuth: any = null;
+let adminDb: any = null;
+
+export function getAdminApp() {
+  if (adminApp) return adminApp;
 
   const projectId =
     process.env.FIREBASE_PROJECT_ID ||
     process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
   const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
-  // Replace escaped newlines — critical for Vercel env vars stored as a single line string
-  const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n");
+  
+  let privateKey = process.env.FIREBASE_PRIVATE_KEY;
+  if (privateKey) {
+    // Strip surrounding quotes if present (which happens if pasted with quotes on Vercel)
+    if (privateKey.startsWith('"') && privateKey.endsWith('"')) {
+      privateKey = privateKey.slice(1, -1);
+    }
+    privateKey = privateKey.replace(/\\n/g, "\n");
+  }
 
-  console.log("[Firebase Admin] Initializing...");
+  console.log("[Firebase Admin] Initializing on demand...");
   console.log("[Firebase Admin] projectId:", projectId ? "✓ present" : "✗ MISSING");
   console.log("[Firebase Admin] clientEmail:", clientEmail ? "✓ present" : "✗ MISSING");
   console.log(
@@ -26,10 +39,14 @@ const initializeFirebaseAdmin = () => {
     privateKey ? "✓ present" : "✗ MISSING"
   );
 
+  if (getApps().length > 0) {
+    console.log("[Firebase Admin] Reusing existing app instance");
+    adminApp = getApp();
+    return adminApp;
+  }
+
   if (!projectId) {
-    throw new Error(
-      "[Firebase Admin] FIREBASE_PROJECT_ID (or NEXT_PUBLIC_FIREBASE_PROJECT_ID) is not set."
-    );
+    console.warn("[Firebase Admin] WARNING: FIREBASE_PROJECT_ID is not set.");
   }
 
   if (clientEmail && privateKey) {
@@ -43,22 +60,36 @@ const initializeFirebaseAdmin = () => {
       },
       ADMIN_APP_NAME
     );
+    adminApp = initializeApp({
+      credential: cert({
+        projectId,
+        clientEmail,
+        privateKey,
+      }),
+    });
     console.log("[Firebase Admin] Initialized with service account credentials ✓");
-    return app;
+    return adminApp;
   }
 
-  // Warn loudly — missing credentials will cause session cookie operations to fail
   console.warn(
     "[Firebase Admin] WARNING: FIREBASE_CLIENT_EMAIL or FIREBASE_PRIVATE_KEY is missing. " +
-      "Falling back to Application Default Credentials. " +
-      "Session cookie operations will likely FAIL unless running on GCP."
+      "Falling back to Application Default Credentials."
   );
 
   return initializeApp({ projectId }, ADMIN_APP_NAME);
 };
+  adminApp = initializeApp({ projectId });
+  return adminApp;
+}
 
-const adminApp = initializeFirebaseAdmin();
-const adminAuth = getAuth(adminApp);
-const adminDb = getFirestore(adminApp);
+export function getAdminAuth() {
+  if (adminAuth) return adminAuth;
+  adminAuth = getAuth(getAdminApp());
+  return adminAuth;
+}
 
-export { adminApp, adminAuth, adminDb };
+export function getAdminDb() {
+  if (adminDb) return adminDb;
+  adminDb = getFirestore(getAdminApp());
+  return adminDb;
+}

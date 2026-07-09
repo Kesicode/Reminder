@@ -9,16 +9,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Missing idToken" }, { status: 400 });
     }
 
-    const success = await createSession(idToken);
+    const result = await createSession(idToken);
 
-    if (!success) {
-      return NextResponse.json({ error: "Failed to create session" }, { status: 401 });
+    if (!result.success) {
+      return NextResponse.json({ error: result.error || "Failed to create session" }, { status: 401 });
     }
 
     return NextResponse.json({ success: true });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Session API Error:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return NextResponse.json({ error: error?.message || "Internal Server Error" }, { status: 500 });
   }
 }
 
