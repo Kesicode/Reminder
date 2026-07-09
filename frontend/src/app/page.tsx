@@ -12,30 +12,30 @@ export default function Home() {
       {/* Background gradients */}
       <motion.div 
         animate={{ 
-          y: [0, -120, 0],
-          x: [0, 80, 0],
-          scale: [1, 1.3, 1]
+          y: ['-10vh', '40vh', '10vh', '-10vh'],
+          x: ['-10vw', '50vw', '20vw', '-10vw'],
+          scale: [1, 1.4, 1.1, 1]
         }}
         transition={{ 
-          duration: 8, 
+          duration: 20, 
           repeat: Infinity,
           ease: "easeInOut" 
         }}
-        className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-blue-600/20 blur-[120px] rounded-full pointer-events-none" 
+        className="absolute top-0 left-0 w-[50vw] h-[50vh] bg-blue-600/20 blur-[120px] rounded-full pointer-events-none" 
       />
       <motion.div 
         animate={{ 
-          y: [0, 100, 0],
-          x: [0, -100, 0],
-          scale: [1, 1.4, 1]
+          y: ['10vh', '-40vh', '-10vh', '10vh'],
+          x: ['10vw', '-50vw', '-20vw', '10vw'],
+          scale: [1, 1.5, 1.2, 1]
         }}
         transition={{ 
-          duration: 10, 
+          duration: 25, 
           repeat: Infinity,
           ease: "easeInOut",
           delay: 2
         }}
-        className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-purple-600/20 blur-[120px] rounded-full pointer-events-none" 
+        className="absolute bottom-0 right-0 w-[50vw] h-[50vh] bg-purple-600/20 blur-[120px] rounded-full pointer-events-none" 
       />
 
       {/* Hero Section */}
