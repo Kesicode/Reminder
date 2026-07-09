@@ -12,9 +12,9 @@ export default function Home() {
       {/* Background gradients */}
       <motion.div 
         animate={{ 
-          y: [0, -50, 0],
-          x: [0, 30, 0],
-          scale: [1, 1.1, 1]
+          y: [0, -120, 0],
+          x: [0, 80, 0],
+          scale: [1, 1.3, 1]
         }}
         transition={{ 
           duration: 8, 
@@ -25,9 +25,9 @@ export default function Home() {
       />
       <motion.div 
         animate={{ 
-          y: [0, 50, 0],
-          x: [0, -40, 0],
-          scale: [1, 1.2, 1]
+          y: [0, 100, 0],
+          x: [0, -100, 0],
+          scale: [1, 1.4, 1]
         }}
         transition={{ 
           duration: 10, 
