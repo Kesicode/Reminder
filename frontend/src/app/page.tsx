@@ -17,7 +17,7 @@ export default function Home() {
           scale: [1, 1.1, 1]
         }}
         transition={{ 
-          duration: 15, 
+          duration: 8, 
           repeat: Infinity,
           ease: "easeInOut" 
         }}
@@ -30,7 +30,7 @@ export default function Home() {
           scale: [1, 1.2, 1]
         }}
         transition={{ 
-          duration: 18, 
+          duration: 10, 
           repeat: Infinity,
           ease: "easeInOut",
           delay: 2
