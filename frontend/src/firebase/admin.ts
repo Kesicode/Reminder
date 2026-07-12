@@ -27,6 +27,8 @@ export function getAdminApp() {
     // Strip surrounding quotes if present (which happens if pasted with quotes on Vercel)
     if (privateKey.startsWith('"') && privateKey.endsWith('"')) {
       privateKey = privateKey.slice(1, -1);
+    } else if (privateKey.startsWith("'") && privateKey.endsWith("'")) {
+      privateKey = privateKey.slice(1, -1);
     }
     privateKey = privateKey.replace(/\\n/g, "\n");
   }
