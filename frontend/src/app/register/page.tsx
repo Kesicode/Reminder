@@ -139,17 +139,6 @@ export default function RegisterPage() {
     } catch (err: any) {
       console.warn("[Register] Error:", err?.code, err?.message);
 
-      // Rollback: if we created an auth user but something else failed (like session sync), delete the user
-      // so their email doesn't get locked in a partially registered state.
-      if (auth.currentUser) {
-        try {
-          console.log("[Register] Rolling back user creation due to error...");
-          await auth.currentUser.delete();
-        } catch (rollbackErr) {
-          console.error("[Register] Failed to rollback user:", rollbackErr);
-        }
-      }
-
       const message = err?.code
         ? getRegisterErrorMessage(err.code)
         : err?.message || "Failed to create account. Please try again.";
